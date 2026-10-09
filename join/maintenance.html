@@ -1,142 +1,108 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قيد الصيانة</title>
+    <title>WhatsApp Portal Maintenance</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
-            background-color: #000000;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #111B21; /* Official WhatsApp dark background */
+            color: #E9EDEF;
+            font-family: system-ui, -apple-system, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            overflow: hidden;
+            margin: 0;
         }
-
         .container {
+            background-color: #202C33; /* Official WhatsApp panel color */
+            padding: 3rem 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             text-align: center;
-            padding: 2rem;
-            max-width: 600px;
-            width: 100%;
+            max-width: 420px;
+            width: 90%;
+            border: 1px solid #222D34;
         }
-
-        .message {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: #ffffff;
+        h2 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: #25D366; /* Official WhatsApp Green */
+            font-size: 1.5rem;
+        }
+        p {
+            color: #8696A0; /* Official WhatsApp secondary text */
+            font-size: 0.95rem;
+            line-height: 1.5;
             margin-bottom: 2rem;
-            line-height: 1.6;
         }
-
-        .countdown-box {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            direction: ltr; /* Keeps numbers looking standard */
-        }
-
-        .time-segment {
-            background: #111111;
-            border: 2px solid #00ff66;
-            border-radius: 12px;
-            padding: 15px 20px;
-            min-width: 85px;
-            box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
-        }
-
-        .time-value {
-            font-size: 2.5rem;
+        .timer {
+            font-size: 3.2rem;
             font-weight: bold;
-            color: #00ff66;
-            font-family: monospace;
+            color: #25D366;
+            margin-bottom: 2rem;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 2px;
         }
-
-        .time-label {
-            font-size: 0.85rem;
-            color: #ffffff;
-            margin-top: 5px;
-            text-transform: uppercase;
-        }
-
-        .separator {
-            font-size: 2.5rem;
+        .whatsapp-btn {
+            display: none; /* Hidden until timer hits zero */
+            background-color: #25D366;
+            color: #111B21;
+            text-decoration: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
             font-weight: bold;
-            color: #00ff66;
-            align-self: center;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+        .whatsapp-btn:hover {
+            background-color: #20ba5a;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="message">
-            الرابط قيد الصيانة حاول مره اخرى بعد 25 دقيقه
-        </div>
-
-        <div class="countdown-box">
-            <div class="time-segment">
-                <div id="minutes" class="time-value">25</div>
-                <div class="time-label">Minutes</div>
-            </div>
-            <div class="separator">:</div>
-            <div class="time-segment">
-                <div id="seconds" class="time-value">00</div>
-                <div class="time-label">Seconds</div>
-            </div>
-        </div>
+        <h2>Portal Maintenance</h2>
+        <p>الرابط قيد الصيانة حاول مره اخرى بعد 25 دقيقه</p>
+        
+        <div class="timer" id="countdown">25:00</div>
+        
+        <a id="whatsappLink" href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK" target="_blank" class="whatsapp-btn">Join WhatsApp Group</a>
     </div>
 
     <script>
-        // Total duration in seconds (25 minutes = 1500 seconds)
-        const TOTAL_TIME = 25 * 60; 
-        
-        const minutesEl = document.getElementById('minutes');
-        const secondsEl = document.getElementById('seconds');
-
-        // Check if an end time is already stored in localStorage for this user
-        let endTime = localStorage.getItem('maintenance_end_time');
+        const DURATION_SECONDS = 25 * 60;
+        let endTime = localStorage.getItem('registration_endtime');
 
         if (!endTime) {
-            // If not, calculate the target end time based on the real-world clock
-            endTime = Date.now() + (TOTAL_TIME * 1000);
-            localStorage.setItem('maintenance_end_time', endTime);
-        } else {
-            // Parse it back to an integer
-            endTime = parseInt(endTime, 10);
+            endTime = Date.now() + (DURATION_SECONDS * 1000);
+            localStorage.setItem('registration_endtime', endTime);
         }
+
+        const timerDisplay = document.getElementById('countdown');
+        const whatsappBtn = document.getElementById('whatsappLink');
 
         function updateTimer() {
             const now = Date.now();
-            const remainingTime = Math.floor((endTime - now) / 1000);
+            const timeLeft = Math.max(0, Math.floor((endTime - now) / 1000));
 
-            if (remainingTime <= 0) {
-                // Timer has finished
-                minutesEl.textContent = "00";
-                secondsEl.textContent = "00";
-                localStorage.removeItem('maintenance_end_time'); // Optional: reset when done
-                return;
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+
+            timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerDisplay.style.display = 'none';
+                whatsappBtn.style.display = 'inline-block';
+                localStorage.removeItem('registration_endtime');
             }
-
-            const minutes = Math.floor(remainingTime / 60);
-            const seconds = remainingTime % 60;
-
-            // Display with leading zeros
-            minutesEl.textContent = String(minutes).padStart(2, '0');
-            secondsEl.textContent = String(seconds).padStart(2, '0');
         }
 
-        // Run immediately and then every second
         updateTimer();
-        setInterval(updateTimer, 1000);
+        const timerInterval = setInterval(updateTimer, 1000);
     </script>
 
 </body>
