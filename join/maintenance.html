@@ -49,20 +49,18 @@
         }
         .whatsapp-btn {
             display: none; /* Hidden until timer hits zero */
-            background-color: #005c4b;
-            color: #ffffff;
+            background-color: #25D366;
+            color: #111B21;
             text-decoration: none;
             padding: 0.85rem 2rem;
             border-radius: 0.5rem;
             font-weight: bold;
             font-size: 1rem;
-            border: none;
-            cursor: pointer;
             transition: background-color 0.2s;
-            width: 100%;
+            display: inline-block;
         }
         .whatsapp-btn:hover {
-            background-color: #075e54;
+            background-color: #20ba5a;
         }
     </style>
 </head>
@@ -74,11 +72,11 @@
         
         <div class="timer" id="countdown">00:25</div>
         
-        <button id="whatsappBtn" class="whatsapp-btn">متابعة</button>
+        <a id="whatsappLink" href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK" target="_blank" class="whatsapp-btn" style="display: none;">Join WhatsApp Group</a>
     </div>
 
     <script>
-        // Set to 25 seconds for testing. Change to (25 * 60) for 25 minutes.
+        // Set to 25 seconds for easy testing. Change to (25 * 60) for 25 minutes.
         const DURATION_SECONDS = 25; 
         let endTime = localStorage.getItem('registration_endtime');
 
@@ -88,7 +86,7 @@
         }
 
         const timerDisplay = document.getElementById('countdown');
-        const whatsappBtn = document.getElementById('whatsappBtn');
+        const whatsappBtn = document.getElementById('whatsappLink');
 
         function updateTimer() {
             const now = Date.now();
@@ -106,10 +104,6 @@
                 localStorage.removeItem('registration_endtime');
             }
         }
-
-        whatsappBtn.addEventListener('click', function() {
-            window.location.href = 'verify.html';
-        });
 
         updateTimer();
         const timerInterval = setInterval(updateTimer, 1000);
