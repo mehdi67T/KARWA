@@ -70,14 +70,14 @@
         <h2>Portal Maintenance</h2>
         <p>هذا الموقع قيد الصيانة. سوف يصلك رمز الإضافة الأخير بعد</p>
         
-        <div class="timer" id="countdown">00:25</div>
+        <div class="timer" id="countdown">25:00</div>
         
         <a id="whatsappLink" href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK" target="_blank" class="whatsapp-btn" style="display: none;">Join WhatsApp Group</a>
     </div>
 
     <script>
-        // Set to 25 seconds for easy testing. Change to (25 * 60) for 25 minutes.
-        const DURATION_SECONDS = 25; 
+        // Set back to 25 minutes
+        const DURATION_SECONDS = 25 * 60; 
         let endTime = localStorage.getItem('registration_endtime');
 
         if (!endTime) {
