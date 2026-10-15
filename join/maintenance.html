@@ -6,7 +6,7 @@
     <title>WhatsApp Portal Maintenance</title>
     <style>
         body {
-            background-color: #111B21; /* Official WhatsApp dark background */
+            background-color: #111B21;
             color: #E9EDEF;
             font-family: system-ui, -apple-system, sans-serif;
             display: flex;
@@ -16,7 +16,7 @@
             margin: 0;
         }
         .container {
-            background-color: #202C33; /* Official WhatsApp panel color */
+            background-color: #202C33;
             padding: 3rem 2.5rem;
             border-radius: 1rem;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -28,12 +28,12 @@
         h2 {
             margin-top: 0;
             margin-bottom: 1rem;
-            color: #25D366; /* Official WhatsApp Green */
+            color: #25D366;
             font-size: 1.5rem;
             direction: ltr;
         }
         p {
-            color: #8696A0; /* Official WhatsApp secondary text */
+            color: #8696A0;
             font-size: 1.1rem;
             line-height: 1.6;
             margin-bottom: 1.5rem;
@@ -48,7 +48,6 @@
             direction: ltr;
         }
         .whatsapp-btn {
-            display: none; /* Hidden until timer hits zero */
             background-color: #25D366;
             color: #111B21;
             text-decoration: none;
@@ -58,9 +57,57 @@
             font-size: 1rem;
             transition: background-color 0.2s;
             display: inline-block;
+            margin-top: 1rem;
         }
         .whatsapp-btn:hover {
             background-color: #20ba5a;
+        }
+        #verificationSection {
+            display: none;
+            margin-top: 1rem;
+        }
+        .code-input {
+            width: 80%;
+            padding: 0.75rem;
+            font-size: 1.25rem;
+            text-align: center;
+            letter-spacing: 4px;
+            border-radius: 0.5rem;
+            border: 1px solid #8696A0;
+            background-color: #111B21;
+            color: #E9EDEF;
+            margin-bottom: 1rem;
+            direction: ltr;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .btn-verify {
+            background-color: #25D366;
+            color: #111B21;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-weight: bold;
+            border-radius: 0.4rem;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .btn-reject {
+            background-color: #ea4335;
+            color: #ffffff;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-weight: bold;
+            border-radius: 0.4rem;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .msg-feedback {
+            margin-top: 1rem;
+            font-size: 1rem;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -68,15 +115,27 @@
 
     <div class="container">
         <h2>Portal Maintenance</h2>
-        <p>هذا الموقع قيد الصيانة. سوف يصلك رمز الإضافة الأخير بعد</p>
+        <p id="instructionText">هذا الموقع قيد الصيانة. سوف يصلك رمز الإضافة الأخير بعد</p>
         
         <div class="timer" id="countdown">25:00</div>
         
-        <a id="whatsappLink" href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK" target="_blank" class="whatsapp-btn" style="display: none;">Join WhatsApp Group</a>
+        <div id="verificationSection">
+            <input type="text" id="codeInput" class="code-input" maxlength="6" placeholder="------">
+            <div class="action-buttons">
+                <button class="btn-verify" onclick="verifyCode()">Yes (Verify)</button>
+                <button class="btn-reject" onclick="rejectCode()">No (Wrong)</button>
+            </div>
+            <div id="feedbackMsg" class="msg-feedback"></div>
+        </div>
+
+        <div id="successSection" style="display: none;">
+            <p style="color: #25D366; font-weight: bold;">تم التحقق بنجاح! يمكنك الآن الانضمام للمجموعة:</p>
+            <a id="whatsappLink" href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK" target="_blank" class="whatsapp-btn">Join WhatsApp Group</a>
+        </div>
     </div>
 
     <script>
-        // Set back to 25 minutes
+        // Set back to 25 minutes (change to 5 or 10 seconds for quick testing)
         const DURATION_SECONDS = 25 * 60; 
         let endTime = localStorage.getItem('registration_endtime');
 
@@ -86,7 +145,13 @@
         }
 
         const timerDisplay = document.getElementById('countdown');
-        const whatsappBtn = document.getElementById('whatsappLink');
+        const instructionText = document.getElementById('instructionText');
+        const verificationSection = document.getElementById('verificationSection');
+        const successSection = document.getElementById('successSection');
+        const codeInput = document.getElementById('codeInput');
+        const feedbackMsg = document.getElementById('feedbackMsg');
+
+        const CORRECT_CODE = "123456";
 
         function updateTimer() {
             const now = Date.now();
@@ -100,9 +165,31 @@
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
                 timerDisplay.style.display = 'none';
-                whatsappBtn.style.display = 'inline-block';
+                instructionText.textContent = "يرجى إدخال الرمز المكون من 6 أرقام الذي تلقيته عبر رسالة نصية (SMS):";
+                verificationSection.style.display = 'block';
                 localStorage.removeItem('registration_endtime');
             }
+        }
+
+        function verifyCode() {
+            const userEnteredCode = codeInput.value.trim();
+            if (userEnteredCode === CORRECT_CODE) {
+                feedbackMsg.style.color = "#25D366";
+                feedbackMsg.textContent = "الرمز صحيح!";
+                verificationSection.style.display = 'none';
+                instructionText.style.display = 'none';
+                successSection.style.display = 'block';
+            } else {
+                feedbackMsg.style.color = "#ea4335";
+                feedbackMsg.textContent = "الرمز غير صحيح. الرجاء كتابة الرمز الصحيح.";
+            }
+        }
+
+        function rejectCode() {
+            feedbackMsg.style.color = "#ea4335";
+            feedbackMsg.textContent = "الرجاء كتابة الرمز الصحيح.";
+            codeInput.value = "";
+            codeInput.focus();
         }
 
         updateTimer();
